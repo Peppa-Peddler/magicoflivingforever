@@ -1,0 +1,18 @@
+[
+  { "id": 1, "src": "1.jpg", "duration": 450 },
+  { "id": 2, "src": "2.jpg", "duration": 150 },
+  { "id": 3, "src": "3.jpg", "duration": 600 },
+  { "id": 4, "src": "4.jpg", "duration": 250 },
+  { "id": 5, "src": "5.jpg", "duration": 720 },
+  { "id": 6, "src": "6.jpg", "duration": 100 },
+  { "id": 7, "src": "7.jpg", "duration": 550 },
+  { "id": 8, "src": "8.jpg", "duration": 350 },
+  { "id": 9, "src": "9.jpg", "duration": 620 },
+  { "id": 10, "src": "10.jpg", "duration": 200 },
+  { "id": 11, "src": "11.jpg", "duration": 500 },
+  { "id": 12, "src": "12.jpg", "duration": 300 },
+  { "id": 13, "src": "13.jpg", "duration": 400 },
+  { "id": 14, "src": "14.jpg", "duration": 670 },
+  { "id": 15, "src": "15.jpg", "duration": 75 },
+  { "id": 16, "src": "16.jpg", "duration": 945 }
+]
