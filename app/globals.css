@@ -35,10 +35,16 @@ html, body, #__next {
   overflow: hidden;
   margin: 0;
   padding: 0;
-  font-family: 'IBM Plex Mono', monospace !important;
-  font-size: 12px !important;
-  color: #ccc8c0 !important;
-  font-weight: normal !important;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  color: #78716c;
+  font-weight: normal;
+}
+
+* {
+  font-family: 'IBM Plex Mono', monospace;
+  color: #78716c;
+  font-weight: normal;
 }
 
 * {

@@ -87,14 +87,10 @@ const ImageViewer = ({ images }: { images: ImageData[] }) => {
   const progress = (elapsedInImage / totalImageDuration) * 100;
 
   // Build filter strings and image opacity
-  // Positive: Phase 1 (pure white→normal) then Phase 2 (normal→inverted black)
-  // Negative: Always inverted version of positive
-  // Image opacity: 0 at start, increases to 100% over 1/3 of elapsed time
-  
   let positiveFilter = '';
   let negativeFilter = '';
   let imageOpacity = 0; // Image fades in over 1/3 of duration
-  
+
   // Calculate image opacity based on elapsed time (0 to 100% over 1/3 of image duration)
   const opacityDuration = currentImage.duration / 3; // 1/3 of the image's variable duration
   if (elapsedInImage < opacityDuration) {
@@ -104,7 +100,7 @@ const ImageViewer = ({ images }: { images: ImageData[] }) => {
     // Image stays at 100% for the rest of the image
     imageOpacity = 100;
   }
-  
+
   if (brightness >= 0) {
     // Phase 1: pure white to normal
     // brightness = 100% → brightness(6) [pure white]
@@ -155,7 +151,6 @@ const ImageViewer = ({ images }: { images: ImageData[] }) => {
   const dateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
   
   // Create a seed based on the date (so all data depends only on the clock, not the date)
-  // This ensures the same data throughout the day
   const createSeededRandom = (seed: string): (() => number) => {
     let x = Math.sin(seed.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) * 10000;
     x = x - Math.floor(x);
@@ -168,7 +163,6 @@ const ImageViewer = ({ images }: { images: ImageData[] }) => {
   const seededRandom = createSeededRandom(dateString);
   
   // Calculate solar/time data based on elapsed time in the 2-hour cycle
-  // Assume the cycle represents a full day (0-2 hours = 0-24 hours)
   const hoursInDay = (elapsedInImage / TOTAL_CYCLE_SECONDS) * 24;
   const sunriseTime = 6; // 6 AM
   const sunsetTime = 18; // 6 PM
@@ -177,22 +171,10 @@ const ImageViewer = ({ images }: { images: ImageData[] }) => {
   const blueHourStart = sunsetTime; // 6 PM
   const blueHourEnd = sunsetTime + 1; // 7 PM
   
-  // Determine sunrise/sunset status
-  let sunStatus = 'Night';
-  if (hoursInDay >= sunriseTime && hoursInDay < sunsetTime) {
-    sunStatus = 'Day';
-  } else if (hoursInDay >= goldenHourStart && hoursInDay < goldenHourEnd) {
-    sunStatus = 'Golden Hour';
-  } else if (hoursInDay >= blueHourStart && hoursInDay < blueHourEnd) {
-    sunStatus = 'Blue Hour';
-  }
-  
   // Calculate solar altitude (angle above horizon, -90 to 90)
-  // Peaks at 90° at noon, -90° at midnight
   const solarAltitude = Math.sin((hoursInDay - 6) / 12 * Math.PI) * 90;
   
   // Calculate solar azimuth (compass direction, 0-360°)
-  // 0° = North, 90° = East, 180° = South, 270° = West
   const solarAzimuth = ((hoursInDay - 6) / 24) * 360;
   
   // Format sunrise/sunset times
@@ -207,7 +189,7 @@ const ImageViewer = ({ images }: { images: ImageData[] }) => {
   const latitude = '-12.05165965';
   const longitude = '-77.0346048270753';
   
-  // Ghost Detector based on image index (seeded, so same for each image every day)
+  // Ghost Detector based on image index
   const ghostDetectors = [
     'MUC v1.01 I',
     'MUC v2.03 II',
@@ -217,8 +199,21 @@ const ImageViewer = ({ images }: { images: ImageData[] }) => {
   const ghostDetectorIndex = currentImageIndex % ghostDetectors.length;
   const ghostDetector = ghostDetectors[ghostDetectorIndex];
 
+  const progressPercentage = (progress).toFixed(1);
+
   return (
     <div className="w-screen flex flex-col overflow-hidden relative">
+      {/* Fixed Exposition Time - Top Left Corner of entire page */}
+      <div
+        className="fixed top-4 left-4 text-sm z-50"
+        style={{
+          mixBlendMode: 'difference',
+          color: '#ffffff',
+        }}
+      >
+        Exposition time: {Math.floor(elapsedInImage)}s / {totalSeconds}s ({totalMinutes} min) - {progressPercentage}%
+      </div>
+
       {/* Top Half: Positive Image - 25:6 aspect ratio */}
       <div
         className="relative w-full flex items-center justify-center overflow-hidden bg-white"
@@ -255,15 +250,10 @@ const ImageViewer = ({ images }: { images: ImageData[] }) => {
       </div>
 
       {/* Info Section Below Images */}
-      <div className="w-full px-4 py-4 bg-white">
-        {/* Top Row: Exposition Time and Audio Button */}
-        <div className="flex items-center justify-between mb-3">
-          {/* Left: Exposition Time */}
-          <div>
-            Exposition time: {Math.floor(elapsedInImage)}s / {totalSeconds}s ({totalMinutes} min)
-          </div>
-
-          {/* Right: Audio Button (Sound Icon) */}
+      <div className="w-full px-4 py-4 bg-white text-sm">
+        {/* Top Row: Audio Button */}
+        <div className="flex items-center justify-end mb-3">
+          {/* Audio Button (Sound Icon) */}
           <button
             onClick={handleAudioToggle}
             style={{
