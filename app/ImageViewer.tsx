@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import DataDisplay from './DataDisplay';
+import AudioPlayer from './AudioPlayer';
 
 interface ImageData {
   id: number;
@@ -12,11 +14,9 @@ const ImageViewer = ({ images }: { images: ImageData[] }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [elapsedInImage, setElapsedInImage] = useState(0);
   const [brightness, setBrightness] = useState(100);
-  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
-  const audioElementRef = useRef<HTMLAudioElement | null>(null);
 
   const NORMAL_TO_BLACK_DURATION = 20; // Fixed 20s for normal→black transition
-  const TOTAL_CYCLE_SECONDS = 2 * 60 * 60; // 2 hours = 7200 seconds
+  const TOTAL_CYCLE_SECONDS = 30 * 60; // 30 minutes = 1800 seconds
 
   // Calculate which image should be playing based on current time
   useEffect(() => {
@@ -28,7 +28,7 @@ const ImageViewer = ({ images }: { images: ImageData[] }) => {
         now.getSeconds() +
         now.getMilliseconds() / 1000;
 
-      // Get position within the 2-hour cycle
+      // Get position within the 30-minute cycle
       const cyclePosition = secondsSinceMidnight % TOTAL_CYCLE_SECONDS;
 
       // Calculate cumulative time to find current image
@@ -121,21 +121,7 @@ const ImageViewer = ({ images }: { images: ImageData[] }) => {
     negativeFilter = `brightness(${darkBrightness}) invert(${negativeInvertAmount})`;
   }
 
-  const handleAudioToggle = () => {
-    if (!audioElementRef.current) {
-      audioElementRef.current = new Audio('/output.mp3');
-    }
-    
-    if (isAudioPlaying) {
-      audioElementRef.current.pause();
-      setIsAudioPlaying(false);
-    } else {
-      audioElementRef.current.play().catch(() => {
-        console.log('Audio play failed');
-      });
-      setIsAudioPlaying(true);
-    }
-  };
+
 
   // Format elapsed time
   const elapsedMinutes = Math.floor(elapsedInImage / 60);
@@ -162,7 +148,7 @@ const ImageViewer = ({ images }: { images: ImageData[] }) => {
   
   const seededRandom = createSeededRandom(dateString);
   
-  // Calculate solar/time data based on elapsed time in the 2-hour cycle
+  // Calculate solar/time data based on elapsed time in the 30-minute cycle
   const hoursInDay = (elapsedInImage / TOTAL_CYCLE_SECONDS) * 24;
   const sunriseTime = 6; // 6 AM
   const sunsetTime = 18; // 6 PM
@@ -202,152 +188,137 @@ const ImageViewer = ({ images }: { images: ImageData[] }) => {
   const progressPercentage = (progress).toFixed(1);
 
   return (
-    <div className="w-screen flex flex-col overflow-hidden relative">
-      {/* Fixed Exposition Time - Top Left Corner of entire page */}
-      <div
-        className="fixed top-4 left-4 text-sm z-50"
-        style={{
-          mixBlendMode: 'difference',
-          color: '#ffffff',
-        }}
-      >
-        Exposition time: {Math.floor(elapsedInImage)}s / {totalSeconds}s ({totalMinutes} min) - {progressPercentage}%
-      </div>
-
-      {/* Top Half: Positive Image - 25:6 aspect ratio */}
-      <div
-        className="relative w-full flex items-center justify-center overflow-hidden bg-white"
-        style={{ aspectRatio: '25 / 6' }}
-      >
-        <img
-          src={currentImage.src}
-          alt={`Image ${currentImage.id}`}
-          className="h-full w-full object-cover animate-vibrate"
+    <div className="w-screen flex flex-col relative" style={{ height: 'auto' }}>
+      {/* Two Column Layout - Left Column and Images */}
+      <div style={{ display: 'flex', width: '100%' }}>
+        {/* Left Column - Controls and Visualizations */}
+        <div
           style={{
-            filter: positiveFilter,
-            opacity: imageOpacity / 100,
+            width: '10%',
+            backgroundColor: '#001aff',
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '16px',
+            gap: '24px',
+            overflowY: 'auto',
           }}
-        />
-      </div>
-
-      {/* Divider */}
-      <div className="w-full h-px bg-gray-800" />
-
-      {/* Bottom Half: Negative Image - 25:6 aspect ratio */}
-      <div
-        className="relative w-full flex items-center justify-center overflow-hidden"
-        style={{ aspectRatio: '25 / 6', backgroundColor: '#000000' }}
-      >
-        <img
-          src={currentImage.src}
-          alt={`Negative ${currentImage.id}`}
-          className="h-full w-full object-cover animate-vibrate"
-          style={{
-            filter: negativeFilter,
-            opacity: imageOpacity / 100,
-          }}
-        />
-      </div>
-
-      {/* Info Section Below Images */}
-      <div className="w-full px-4 py-4 bg-white text-sm">
-        {/* Top Row: Audio Button */}
-        <div className="flex items-center justify-end mb-3">
-          {/* Audio Button (Sound Icon) */}
-          <button
-            onClick={handleAudioToggle}
+        >
+          {/* Exposition Time */}
+          <div
             style={{
-              padding: '8px 12px',
-              backgroundColor: '#000000',
               color: '#ffffff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              fontSize: '14px',
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#333333';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#000000';
-            }}
-            title={isAudioPlaying ? 'Stop audio' : 'Play audio'}
           >
-            {isAudioPlaying ? (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                <path d="M15.54 8.46a6.5 6.5 0 0 1 0 9.07"></path>
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-              </svg>
-            ) : (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                <path d="M15.54 8.46a6.5 6.5 0 0 1 0 9.07"></path>
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-              </svg>
-            )}
-          </button>
+            Exposition <br/> {totalMinutes} min <br/>
+            {Math.floor(elapsedInImage)}s / {totalSeconds}s  - {progressPercentage}%
+          </div>
+
+          {/* Audio Player Button */}
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <AudioPlayer compact={true} />
+          </div>
+
+          {/* Color Spectrum Graph - Light Entering */}
+          <div style={{ marginTop: '16px' }}>
+            <svg width="100%" height="120" viewBox="0 0 100 120" style={{ backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+              <defs>
+                <linearGradient id="spectrum" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" style={{ stopColor: 'rgb(255,0,0)', stopOpacity: 1 }} />
+                  <stop offset="16%" style={{ stopColor: 'rgb(255,255,0)', stopOpacity: 1 }} />
+                  <stop offset="33%" style={{ stopColor: 'rgb(0,255,0)', stopOpacity: 1 }} />
+                  <stop offset="50%" style={{ stopColor: 'rgb(0,255,255)', stopOpacity: 1 }} />
+                  <stop offset="66%" style={{ stopColor: 'rgb(0,0,255)', stopOpacity: 1 }} />
+                  <stop offset="83%" style={{ stopColor: 'rgb(255,0,255)', stopOpacity: 1 }} />
+                  <stop offset="100%" style={{ stopColor: 'rgb(255,0,0)', stopOpacity: 1 }} />
+                </linearGradient>
+              </defs>
+              {/* Animated light beam showing progress */}
+              <rect x="0" y="10" width={`${progress}%`} height="20" fill="url(#spectrum)" opacity="0.8" />
+              {/* Spectrum bar background */}
+              <rect x="0" y="40" width="100" height="15" fill="url(#spectrum)" opacity="0.5" />
+              {/* Progress label */}
+              <text x="50" y="85" textAnchor="middle" fontSize="8" fill="#78716c">
+                Light spectrum
+              </text>
+            </svg>
+          </div>
+
+          {/* Brightness Value Graph - Descending */}
+          <div style={{ marginTop: '16px' }}>
+            <svg width="100%" height="120" viewBox="0 0 100 120" style={{ backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+              {/* Grid lines */}
+              <line x1="0" y1="100" x2="100" y2="100" stroke="#e5e7eb" strokeWidth="0.5" />
+              <line x1="0" y1="50" x2="100" y2="50" stroke="#e5e7eb" strokeWidth="0.5" />
+              <line x1="0" y1="0" x2="100" y2="0" stroke="#e5e7eb" strokeWidth="0.5" />
+              
+              {/* Brightness descending line */}
+              <line
+                x1="0"
+                y1={100 - (brightness + 100) / 2}
+                x2="100"
+                y2="100"
+                stroke="#000000"
+                strokeWidth="1.5"
+              />
+              
+              {/* Current brightness indicator */}
+              <circle
+                cx={progress}
+                cy={100 - (brightness + 100) / 2}
+                r="1.5"
+                fill="#000000"
+              />
+              
+              {/* Brightness label */}
+              <text x="50" y="115" textAnchor="middle" fontSize="8" fill="#78716c">
+                Brightness: {brightness.toFixed(0)}%
+              </text>
+            </svg>
+          </div>
         </div>
 
-        {/* Bottom Row: Data Grid - Each item in its own column */}
-        <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(9, 1fr)' }}>
-          {/* Sunrise */}
-          <div>
-            <div>Sunrise</div>
-            <div>{sunriseFormatted}</div>
+        {/* Right Column - Images Only */}
+        <div style={{ width: '90%', display: 'flex', flexDirection: 'column' }}>
+          {/* Top Half: Positive Image - 25:6 aspect ratio */}
+          <div
+            className="relative flex items-center justify-center overflow-hidden bg-white"
+            style={{ aspectRatio: '25 / 6' }}
+          >
+            <img
+              src={currentImage.src}
+              alt={`Image ${currentImage.id}`}
+              className="h-full w-full object-cover animate-vibrate"
+              style={{
+                filter: positiveFilter,
+                opacity: imageOpacity / 100,
+              }}
+            />
           </div>
 
-          {/* Sunset */}
-          <div>
-            <div>Sunset</div>
-            <div>{sunsetFormatted}</div>
-          </div>
+          {/* Divider */}
+          <div style={{ width: '100%', height: '1px', backgroundColor: '#d1d5db' }} />
 
-          {/* Solar Altitude */}
-          <div>
-            <div>Solar Alt.</div>
-            <div>{solarAltitude.toFixed(1)}°</div>
-          </div>
-
-          {/* Solar Azimuth */}
-          <div>
-            <div>Solar Az.</div>
-            <div>{solarAzimuth.toFixed(1)}°</div>
-          </div>
-
-          {/* Golden Hour */}
-          <div>
-            <div>Golden Hr</div>
-            <div>{goldenHourFormatted}</div>
-          </div>
-
-          {/* Blue Hour */}
-          <div>
-            <div>Blue Hr</div>
-            <div>{blueHourFormatted}</div>
-          </div>
-
-          {/* Latitude */}
-          <div>
-            <div>Latitude</div>
-            <div>{latitude}</div>
-          </div>
-
-          {/* Longitude */}
-          <div>
-            <div>Longitude</div>
-            <div>{longitude}</div>
-          </div>
-
-          {/* Ghost Detector */}
-          <div>
-            <div>Ghost Det.</div>
-            <div>{ghostDetector}</div>
+          {/* Bottom Half: Negative Image - 25:6 aspect ratio */}
+          <div
+            className="relative flex items-center justify-center overflow-hidden"
+            style={{ aspectRatio: '25 / 6', backgroundColor: '#000000' }}
+          >
+            <img
+              src={currentImage.src}
+              alt={`Negative ${currentImage.id}`}
+              className="h-full w-full object-cover animate-vibrate"
+              style={{
+                filter: negativeFilter,
+                opacity: imageOpacity / 100,
+              }}
+            />
           </div>
         </div>
       </div>
+
+      {/* Data Display Component - Below Both Columns */}
+      <DataDisplay />
     </div>
   );
 };
